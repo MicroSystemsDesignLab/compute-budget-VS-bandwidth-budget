@@ -22,41 +22,23 @@ Given:
 * **Q**: CPU frequency (GHz)
 * **flops\_per\_cycle**: FLOPS per thread per clock cycle
 
-1. **Total Memory Bandwidth** (Bytes/s):
+## Theoretical Model
 
-   $$
-   B_{total} = M_{links} \times S \times 10^9
-   $$
+1. **Total Memory Bandwidth** (Bytes/s):  
+   ![B_total = M_links × S × 10^9](https://latex.codecogs.com/svg.image?B_{total}=M_{links}\times%20S\times10^9)
 
-2. **Memory-Bound Limit** (FLOP/s):
+2. **Memory-Bound Limit** (FLOP/s):  
+   ![F_mem = (B_total × N_threads) / (bytes_per_flop × Σα)](https://latex.codecogs.com/svg.image?F_{mem}=\frac{B_{total}\times%20N_{threads}}{bytes\_per\_flop\times\sum%20\alpha})
 
-   $$
-   F_{mem} = \frac{B_{total} \times N_{threads}}{bytes\_per\_flop \times (\sum \alpha)}
-   $$
+3. **Compute-Bound Limit** (FLOP/s):  
+   ![F_comp = Q × 10^9 × flops_per_cycle × N_threads](https://latex.codecogs.com/svg.image?F_{comp}=Q\times10^9\times flops_{per\_cycle}\times N_{threads})
 
-   Here, $\sum \alpha$ is the sum of memory access ratios across all threads, approximating total bandwidth demand.
+4. **Actual Performance** (FLOP/s):  
+   ![F_actual = min(F_mem, F_comp)](https://latex.codecogs.com/svg.image?F_{actual}=\min(F_{mem},%20F_{comp}))
 
-3. **Compute-Bound Limit** (FLOP/s):
+5. **Crossover Ratio** (α_thresh):  
+   ![alpha_thresh = (M_links × S) / (bytes_per_flop × Q × N_threads)](https://latex.codecogs.com/svg.image?\alpha_{thresh}=\frac{M_{links}\times%20S}{bytes\_per\_flop\times%20Q\times%20N_{threads}})
 
-   $$
-   F_{comp} = Q \times 10^9 \times flops\_per\_cycle \times N_{threads}
-   $$
-
-4. **Actual Performance** (FLOP/s):
-
-   $$
-   F_{actual} = \min(F_{mem}, F_{comp})
-   $$
-
-5. **Crossover Point** (α\_thresh):
-   Solving $F_{mem} = F_{comp}$ gives:
-
-   $$
-   \alpha_{thresh} = \frac{B_{total}}{bytes\_per\_flop \times Q \times 10^9 \times N_{threads}} = \frac{M_{links} \times S}{bytes\_per\_flop \times Q \times N_{threads}}
-   $$
-
-* If **α < α\_thresh**, the workload is **compute-bound**.
-* If **α > α\_thresh**, the workload is **memory-bound**.
 
 ## Script Structure
 
