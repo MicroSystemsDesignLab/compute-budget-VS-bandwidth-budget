@@ -1,123 +1,109 @@
 # Roofline-Style Bandwidth vs. Frequency Simulator
 
-**Company Confidential**  
-**Penn State MicroDesignLab © 2025 Penn State MicroDesignLab**  
-**Author: Pingyi Huo**
-
----
-
 ## Overview
 
-This script implements a simplified Roofline model to estimate multi-threaded CPU performance under varying memory access ratios (α) and CPU frequencies (Q in GHz). It identifies whether the workload is compute-bound or memory-bound and locates the crossover (“knee”) point.
+This Python script implements a simplified Roofline model to estimate multi-threaded CPU performance under varying memory access intensities (α) and CPU frequencies (Q in GHz). It helps identify whether an application is compute-bound or memory-bound and pinpoints the crossover (“knee”) where the performance bottleneck shifts.
 
----
+### Key Features
 
-## Features
-
-- **Configurable hardware parameters:**
-  - `N_threads`  
-  - `M_links`  
-  - `S` (Channel bandwidth in GB/s)  
-  - `bytes_per_flop`  
-  - `flops_per_cycle`  
-- Scans a grid of CPU frequencies (`Q_list`) and memory access ratios (`alpha_list`)  
-- Computes both memory-bound and compute-bound throughput and selects the minimum  
-- Prints a pivot table of TFLOPS vs. α  
-- Plots TFLOPS vs. α curves with clear labels  
-
----
+* Configurable hardware parameters: number of threads (`N_threads`), memory channels (`M_links`), per-channel bandwidth (GB/s), etc.
+* Scans combinations of CPU frequency (`Q`) and memory access ratio (`α`), computes both memory-bound and compute-bound FLOPS, and takes the minimum as the actual performance.
+* Prints a pivot table of results and plots TFLOPS vs. α curves, clearly showing compute-bound regions (flat) and memory-bound regions (decreasing) along with their crossover points.
 
 ## Theoretical Model
 
-**Total Memory Bandwidth (Bytes/s):**  
-\[
-B_{\text{total}} = M_{\text{links}} \times S \times 10^9
-\]
+Given:
 
-**Memory-Bound Limit (FLOP/s):**  
-\[
-F_{\text{mem}} = \frac{B_{\text{total}} \times N_{\text{threads}}}{\text{bytes\_per\_flop} \times \sum \alpha}
-\]
+* **N\_threads**: Number of threads
+* **M\_links**: Number of shared memory channels
+* **S**: Bandwidth per channel (GB/s)
+* **α**: Memory access ratio per thread (0 ≤ α ≤ 1)
+* **bytes\_per\_flop**: Bytes transferred per floating-point operation
+* **Q**: CPU frequency (GHz)
+* **flops\_per\_cycle**: FLOPS per thread per clock cycle
 
-**Compute-Bound Limit (FLOP/s):**  
-\[
-F_{\text{comp}} = Q \times 10^9 \times \text{flops\_per\_cycle} \times N_{\text{threads}}
-\]
+1. **Total Memory Bandwidth** (Bytes/s):
 
-**Actual Performance:**  
-\[
-F_{\text{actual}} = \min\bigl(F_{\text{mem}},\,F_{\text{comp}}\bigr)
-\]
+   $$
+   B_{total} = M_{links} \times S \times 10^9
+   $$
 
-**Crossover Ratio (αₜₕᵣₑₛₕ):**  
-\[
-\alpha_{\text{thresh}} = \frac{M_{\text{links}} \times S}
-                          {\text{bytes\_per\_flop} \times Q \times N_{\text{threads}}}
-\]
+2. **Memory-Bound Limit** (FLOP/s):
 
-- If \(\alpha < \alpha_{\text{thresh}}\): **compute-bound**  
-- If \(\alpha > \alpha_{\text{thresh}}\): **memory-bound**
+   $$
+   F_{mem} = \frac{B_{total} \times N_{threads}}{bytes\_per\_flop \times (\sum \alpha)}
+   $$
+
+   Here, $\sum \alpha$ is the sum of memory access ratios across all threads, approximating total bandwidth demand.
+
+3. **Compute-Bound Limit** (FLOP/s):
+
+   $$
+   F_{comp} = Q \times 10^9 \times flops\_per\_cycle \times N_{threads}
+   $$
+
+4. **Actual Performance** (FLOP/s):
+
+   $$
+   F_{actual} = \min(F_{mem}, F_{comp})
+   $$
+
+5. **Crossover Point** (α\_thresh):
+   Solving $F_{mem} = F_{comp}$ gives:
+
+   $$
+   \alpha_{thresh} = \frac{B_{total}}{bytes\_per\_flop \times Q \times 10^9 \times N_{threads}} = \frac{M_{links} \times S}{bytes\_per\_flop \times Q \times N_{threads}}
+   $$
+
+* If **α < α\_thresh**, the workload is **compute-bound**.
+* If **α > α\_thresh**, the workload is **memory-bound**.
+
+## Script Structure
+
+* `theoretical_tflops()`: Core function returning FLOP/s based on input parameters.
+* `run_exploration()`: Scans a grid of Q and α, prints a pivot table of TFLOPS, and returns a DataFrame of results.
+* `plot_results()`: Plots TFLOPS vs. α for each frequency.
+* `__main__`: Entry point with example parameters that can be modified.
+
+## Installation and Usage
+
+1. Install dependencies:
+
+   ```bash
+   pip install numpy pandas matplotlib
+   ```
+2. Save the script as `roofline_simulator.py` and make it executable:
+
+   ```bash
+   chmod +x roofline_simulator.py
+   ```
+3. Run the script:
+
+   ```bash
+   ./roofline_simulator.py
+   ```
+
+   or
+
+   ```bash
+   python roofline_simulator.py
+   ```
+
+## Parameters
+
+* `N_threads`: Number of parallel threads
+* `M_links`: Number of memory channels
+* `S`: Bandwidth per channel (GB/s)
+* `bytes_per_flop`: Bytes per float operation (e.g., 16 for double-precision)
+* `flops_per_cycle`: FLOPS per thread per cycle (adjust for SIMD width)
+* `Q_list`, `alpha_list`: Lists of frequencies and memory ratios to explore
+
+## Interpretation of Results
+
+* **Flat Regions** (Compute-Bound): TFLOPS remains constant until α reaches α\_thresh.
+* **Declining Regions** (Memory-Bound): TFLOPS decreases approximately as 1/α.
+* **Knee Points**: α\_thresh values where the curves transition from flat to declining—key for optimization decisions.
 
 ---
 
-## Installation
-
-```bash
-pip install numpy pandas matplotlib
-Usage
-Save the script as roofline_simulator.py.
-
-Make it executable:
-
-bash
-Copy
-Edit
-chmod +x roofline_simulator.py
-Run:
-
-bash
-Copy
-Edit
-./roofline_simulator.py
-# or
-python roofline_simulator.py
-Configuration
-python
-Copy
-Edit
-# Number of parallel threads
-N_threads = 4
-
-# Number of memory channels
-M_links = 4
-
-# Bandwidth per channel in GB/s
-S = 25.0
-
-# Bytes per floating-point operation
-bytes_per_flop = 16
-
-# FLOPS per thread per cycle
-flops_per_cycle = 1
-
-# List of CPU frequencies to explore (GHz)
-Q_list = [1.0, 1.5, 2.0, 2.5, 3.0]
-
-# List of memory access ratios to explore
-alpha_list = [0.1, 0.5, 1.0, 2.0, 5.0]
-Output
-Console: Pivot table of α vs. TFLOPS for each frequency
-
-Plot: Graph of TFLOPS vs. α curves
-
-Interpretation
-Flat Regions: Compute-bound, TFLOPS limited by CPU frequency
-
-Declining Regions: Memory-bound, TFLOPS inversely proportional to α
-
-Knee Points: α_thresh where the bottleneck switches
-
-Use these insights to guide algorithmic optimizations and hardware tuning.
-
-Contact
-For questions or contributions, contact Pingyi Huo at Penn State MicroDesignLab.
+This simulator provides quantitative insight into when CPU frequency versus memory bandwidth limits application performance, guiding both algorithm and hardware choices.
