@@ -57,18 +57,18 @@ Given:
 2. Save the script as `roofline_simulator.py` and make it executable:
 
    ```bash
-   chmod +x roofline_simulator.py
+   chmod +x main.py
    ```
 3. Run the script:
 
    ```bash
-   ./roofline_simulator.py
+   ./main.py
    ```
 
    or
 
    ```bash
-   python roofline_simulator.py
+   python main.py
    ```
 
 ## Parameters
