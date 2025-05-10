@@ -30,8 +30,7 @@ Given:
 2. **Memory-Bound Limit** (FLOP/s):  
    ![F_mem = (B_total × N_threads) / (bytes_per_flop × Σα)](https://latex.codecogs.com/svg.image?F_{mem}=\frac{B_{total}\times%20N_{threads}}{bytes\_per\_flop\times\sum%20\alpha})
 
-3. **Compute-Bound Limit** (FLOP/s):  
-   ![F_comp = Q × 10^9 × flops_per_cycle × N_threads](https://latex.codecogs.com/svg.image?F_{comp}=Q\times10^9\times flops_{per\_cycle}\times N_{threads})
+3. **Compute-Bound Limit** (FLOP/s):![F_comp](https://latex.codecogs.com/svg.image?F_{comp}=Q	imes10^9	imes%20flops_per_cycle	imes%20N_{threads})
 
 4. **Actual Performance** (FLOP/s):  
    ![F_actual = min(F_mem, F_comp)](https://latex.codecogs.com/svg.image?F_{actual}=\min(F_{mem},%20F_{comp}))
